@@ -1,10 +1,11 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-import { processFileContent } from './fileParser';
+// SỬA LỖI TS2614: Import cả ProcessedFile (kiểu dữ liệu)
+import { processFileContent, ProcessedFile } from './fileParser'; 
 
 // It's recommended to initialize GoogleGenAI only once.
-// Ensure the API key is available in the environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+// SỬA LỖI API KEY: Sử dụng GEMINI_API_KEY phù hợp với cấu hình Vite
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // Helper function to convert a file to a GenerativePart
 const fileToGenerativePart = async (file: File): Promise<Part> => {
@@ -31,15 +32,18 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    const processedFiles = await Promise.all(files.map(processFileContent));
+    // SỬA LỖI TS2339: Khai báo kiểu ProcessedFile[]
+    const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
+    // SỬA LỖI TS2339: Khai báo kiểu cho biến f
     textContents = processedFiles
-      .filter(f => f.type === 'text')
+      .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
+    // SỬA LỖI TS2339: Khai báo kiểu cho biến f
     filesForUpload = processedFiles
-      .filter(f => f.type === 'file')
+      .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
       .map(f => f.content as File);
   }
 
