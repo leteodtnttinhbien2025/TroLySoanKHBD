@@ -1,11 +1,18 @@
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import * as mammoth from 'mammoth';
 
+let pdfjsLib: any = null;
+
 /**
- * Set workerSrc để PDF.js load worker script từ CDN
+ * Dynamic import pdfjs-dist để Vite không complain khi build
  */
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+const loadPdfJs = async () => {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist/build/pdf');
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  }
+  return pdfjsLib;
+};
 
 /**
  * Extract text content from a PDF file
@@ -13,8 +20,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
  * @returns extracted text
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
+  const pdfjs = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
 
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -68,7 +76,7 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       return { type: 'text', content: text, name: file.name };
     }
 
-    // Fallback for other file types (images, .doc, etc.)
+    // Fallback cho các loại file khác
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Error processing file ${file.name}:`, error);
