@@ -1,9 +1,14 @@
-import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 
-// It is crucial to set the workerSrc to ensure PDF.js can load its worker script.
-// This path should point to the worker file hosted on a CDN.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+/**
+ * Dynamic import PDF.js legacy build to avoid Vite Rollup build issues
+ */
+const getPdfJs = async () => {
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf'); // dùng legacy build
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+  return pdfjsLib;
+};
 
 /**
  * Extracts text content from a given PDF file.
@@ -11,16 +16,19 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
  * @returns A promise that resolves to the extracted text.
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
+  const pdfjsLib = await getPdfJs();
   const arrayBuffer = await file.arrayBuffer();
-  // The type casting is necessary because the library's types might not be perfectly aligned.
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
+
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const text = await page.getTextContent();
-    // The 'str' property exists on TextItem objects.
-    textContent += text.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+    textContent += text.items
+      .map((item: any) => ('str' in item ? item.str : ''))
+      .join(' ') + '\n';
   }
+
   return textContent;
 };
 
@@ -53,16 +61,19 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       const text = await getTextFromPdf(file);
       return { type: 'text', content: text, name: file.name };
     }
-    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+
+    if (
+      file.type ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ) {
       const text = await getTextFromDocx(file);
       return { type: 'text', content: text, name: file.name };
     }
-    // For other file types (images, .doc), return the file for multimodal processing.
+
+    // Fallback for unsupported types
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
-    // If parsing fails for any reason, fall back to sending the file directly.
-    // This provides a robust fallback mechanism.
     return { type: 'file', content: file, name: file.name };
   }
 };
