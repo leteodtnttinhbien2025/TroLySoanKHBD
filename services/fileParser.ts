@@ -1,5 +1,5 @@
 // services/fileParser.ts
-import * as pdfjsLib from 'pdfjs-dist/build/pdf'; // ✅ Đúng cho Vite
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import * as mammoth from 'mammoth';
 
 // Dùng worker từ CDN để PDF.js load worker script
