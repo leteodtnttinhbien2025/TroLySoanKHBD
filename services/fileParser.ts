@@ -1,22 +1,18 @@
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import * as mammoth from 'mammoth';
 
 /**
- * Dynamic import PDF.js legacy build to avoid Vite Rollup build issues
+ * Set workerSrc để PDF.js load worker script từ CDN
  */
-const getPdfJs = async () => {
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf'); // dùng legacy build
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
-  return pdfjsLib;
-};
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 /**
- * Extracts text content from a given PDF file.
- * @param file The PDF file to process.
- * @returns A promise that resolves to the extracted text.
+ * Extract text content from a PDF file
+ * @param file PDF file
+ * @returns extracted text
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
-  const pdfjsLib = await getPdfJs();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
@@ -33,9 +29,9 @@ const getTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
- * Extracts raw text content from a given DOCX file.
- * @param file The DOCX file to process.
- * @returns A promise that resolves to the extracted text.
+ * Extract raw text from DOCX file
+ * @param file DOCX file
+ * @returns extracted text
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -43,6 +39,9 @@ const getTextFromDocx = async (file: File): Promise<string> => {
   return result.value;
 };
 
+/**
+ * Processed file type
+ */
 export type ProcessedFile = {
   type: 'text' | 'file';
   content: string | File;
@@ -50,10 +49,9 @@ export type ProcessedFile = {
 };
 
 /**
- * Processes a file to extract text if it's a supported format (PDF, DOCX),
- * otherwise returns the file object for direct upload.
- * @param file The file to process.
- * @returns A promise that resolves to a ProcessedFile object.
+ * Process a file: extract text if PDF/DOCX, else return file directly
+ * @param file file to process
+ * @returns ProcessedFile object
  */
 export const processFileContent = async (file: File): Promise<ProcessedFile> => {
   try {
@@ -70,10 +68,10 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       return { type: 'text', content: text, name: file.name };
     }
 
-    // Fallback for unsupported types
+    // Fallback for other file types (images, .doc, etc.)
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
-    console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
+    console.error(`Error processing file ${file.name}:`, error);
     return { type: 'file', content: file, name: file.name };
   }
 };
