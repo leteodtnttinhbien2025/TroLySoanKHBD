@@ -1,8 +1,9 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// SỬA LỖI IMPORT CUỐI CÙNG: Sử dụng import * as (import toàn bộ module) để giải quyết xung đột TS
-import * as FileParser from './fileParser'; 
-import { ProcessedFile } from "./fileParser"; // Vẫn giữ lại ProcessedFile để khai báo kiểu
+// FIX: Import hàm (value) là named export
+import { processFileContent } from './fileParser'; 
+// FIX: Import kiểu dữ liệu (type) một cách tường minh
+import type { ProcessedFile } from "./fileParser";
 
 // It's recommended to initialize GoogleGenAI only once.
 // SỬA LỖI API KEY: Sử dụng GEMINI_API_KEY phù hợp với cấu hình Vite
@@ -33,8 +34,8 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // Gọi hàm qua module FileParser đã import
-    const processedFiles: ProcessedFile[] = await Promise.all(files.map(FileParser.processFileContent));
+    // FIX: Sử dụng processFileContent trực tiếp
+    const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
     // Khai báo kiểu cho biến f
     textContents = processedFiles
