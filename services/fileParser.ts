@@ -1,4 +1,5 @@
-import * as pdfjsLib from 'pdfjs-dist/build/pdf'; // 🔹 Sửa import cho Vite & Rollup
+// services/fileParser.ts
+import * as pdfjsLib from 'pdfjs-dist/build/pdf'; // ✅ Đúng cho Vite
 import * as mammoth from 'mammoth';
 
 // Dùng worker từ CDN để PDF.js load worker script
@@ -7,8 +8,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 /**
  * Extract text content from a PDF file.
- * @param file PDF file
- * @returns extracted text
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -27,9 +26,7 @@ const getTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
- * Extract raw text content from a DOCX file.
- * @param file DOCX file
- * @returns extracted text
+ * Extract raw text from a DOCX file.
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -44,9 +41,7 @@ export type ProcessedFile = {
 };
 
 /**
- * Process a file:
- * - Extract text if PDF/DOCX
- * - Otherwise return file object
+ * Process a file: extract text if PDF/DOCX, else return file.
  */
 export const processFileContent = async (
   file: File
@@ -65,10 +60,9 @@ export const processFileContent = async (
       return { type: 'text', content: text, name: file.name };
     }
 
-    // Fallback for unsupported files
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
-    console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
+    console.error(`Error processing file ${file.name}:`, error);
     return { type: 'file', content: file, name: file.name };
   }
 };
