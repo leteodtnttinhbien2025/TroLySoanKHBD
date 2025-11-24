@@ -5,19 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
+    "react": "^18.3.1",                  
+    "react-dom": "^18.3.1",              
+    "pdfjs-dist": "^4.4.168",      
     "@google/genai": "^1.27.0",
     "mammoth": "latest"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",       
+    "@types/react-dom": "^18.3.0",   
+    "typescript": "~5.5.2",
+    "vite": "^5.3.1",                      
+    "@vitejs/plugin-react": "^4.3.1"      
   }
 }
