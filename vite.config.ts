@@ -24,14 +24,12 @@ export default defineConfig(({ mode }) => {
         }
       },
       define: {
-        // Dọn dẹp: Chỉ giữ lại biến GEMINI_API_KEY duy nhất
+        // Chỉ giữ lại biến GEMINI_API_KEY duy nhất
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
       resolve: {
         alias: {
-          // KHẮC PHỤC LỖI CUỐI CÙNG: Buộc Rollup sử dụng tệp module chính xác
-          'pdfjs-dist': 'pdfjs-dist/build/pdf.mjs',
-          
+          // Khắc phục lỗi alias nếu có
           '@': path.resolve(__dirname, '.'), 
         }
       }
