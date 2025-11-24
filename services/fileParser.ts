@@ -3,11 +3,11 @@ import * as mammoth from 'mammoth';
 let pdfjsLib: any = null;
 
 /**
- * Dynamic import pdfjs-dist để Vite không complain khi build
+ * Dynamic import pdfjs-dist để Vite + Rollup không complain khi build
  */
 const loadPdfJs = async () => {
   if (!pdfjsLib) {
-    pdfjsLib = await import('pdfjs-dist/build/pdf');
+    pdfjsLib = await import('pdfjs-dist/build/pdf'); // dynamic import
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   }
@@ -15,9 +15,7 @@ const loadPdfJs = async () => {
 };
 
 /**
- * Extract text content from a PDF file
- * @param file PDF file
- * @returns extracted text
+ * Lấy text từ PDF
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
   const pdfjs = await loadPdfJs();
@@ -37,9 +35,7 @@ const getTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
- * Extract raw text from DOCX file
- * @param file DOCX file
- * @returns extracted text
+ * Lấy text từ DOCX
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -57,9 +53,7 @@ export type ProcessedFile = {
 };
 
 /**
- * Process a file: extract text if PDF/DOCX, else return file directly
- * @param file file to process
- * @returns ProcessedFile object
+ * Xử lý file: PDF/DOCX extract text, các file khác giữ nguyên
  */
 export const processFileContent = async (file: File): Promise<ProcessedFile> => {
   try {
@@ -76,7 +70,6 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       return { type: 'text', content: text, name: file.name };
     }
 
-    // Fallback cho các loại file khác
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Error processing file ${file.name}:`, error);
