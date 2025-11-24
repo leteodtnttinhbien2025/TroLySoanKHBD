@@ -1,13 +1,13 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX 1: Import hàm processFileContent dưới dạng default import (theo đề xuất của TS và sửa đổi fileParser.ts)
+// FIX: Import hàm processFileContent dưới dạng default import
 import processFileContent from './fileParser'; 
-// FIX 2: Import kiểu dữ liệu ProcessedFile dưới dạng named import thông thường
-import { ProcessedFile } from './fileParser';
+// FIX: Import kiểu dữ liệu ProcessedFile dưới dạng named import
+import { ProcessedFile } from './fileParser'; 
 
 // It's recommended to initialize GoogleGenAI only once.
-// Sửa process.env.API_KEY! thành process.env.GEMINI_API_KEY! (để phù hợp với cấu hình vite.config.ts)
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+// Ensure the API key is available in the environment variables.
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! }); // Sử dụng GEMINI_API_KEY!
 
 // Helper function to convert a file to a GenerativePart
 const fileToGenerativePart = async (file: File): Promise<Part> => {
@@ -34,16 +34,16 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // FIX 3: Thêm chú thích ProcessedFile[] để khắc phục lỗi TS2345 (do lỗi Import đã giải quyết)
+    // FIX TS2345: Thêm chú thích ProcessedFile[] để TypeScript không bị nhầm lẫn
     const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
-    // Thêm type guard để TypeScript có thể thu hẹp kiểu dữ liệu
+    // Thêm type guard cho biến f
     textContents = processedFiles
       .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
-    // Thêm type guard để TypeScript có thể thu hẹp kiểu dữ liệu
+    // Thêm type guard cho biến f
     filesForUpload = processedFiles
       .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
       .map(f => f.content as File);
@@ -253,12 +253,9 @@ ${headerInfoBlock}
 
   } catch (error: unknown) {
     console.error("Lỗi khi gọi Gemini API:", error);
-    // Propagate a more specific error message to the user for better diagnosis,
-    // instead of showing a generic message or attempting to parse the error string.
     if (error instanceof Error && error.message) {
       throw new Error(`Không thể tạo kế hoạch bài dạy. Lỗi từ API: ${error.message}`);
     }
-    // Fallback for non-standard errors.
     throw new Error("Không thể tạo kế hoạch bài dạy do một lỗi không xác định. Vui lòng kiểm tra console để biết thêm chi tiết.");
   }
 };
