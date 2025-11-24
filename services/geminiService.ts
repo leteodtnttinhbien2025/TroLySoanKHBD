@@ -1,12 +1,12 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX 1: Chuyển processFileContent thành default import (theo đề xuất của TS)
+// FIX 1: Import hàm processFileContent dưới dạng default import
 import processFileContent from './fileParser'; 
-// FIX 1: Import type ProcessedFile riêng để tránh xung đột
-import type { ProcessedFile } from './fileParser'; 
+// FIX 2: Import type ProcessedFile riêng biệt và tường minh
+import type { ProcessedFile } from './fileParser';
 
 // It's recommended to initialize GoogleGenAI only once.
-// FIX 2: Sửa tên biến môi trường thành GEMINI_API_KEY!
+// Sửa process.env.API_KEY! thành process.env.GEMINI_API_KEY! (để phù hợp với cấu hình vite)
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // Helper function to convert a file to a GenerativePart
@@ -34,17 +34,17 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // FIX 3: Thêm chú thích kiểu dữ liệu tường minh ProcessedFile[]
+    // FIX 3: Thêm chú thích ProcessedFile[] để khắc phục lỗi TS2345 (loại bỏ kiểu UserConfigFnObject bị nhầm lẫn)
     const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
+    // Thêm type guard để TypeScript có thể thu hẹp kiểu dữ liệu
     textContents = processedFiles
-      // Thêm type guard cho biến f để TS hiểu rõ kiểu trong filter
       .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
+    // Thêm type guard để TypeScript có thể thu hẹp kiểu dữ liệu
     filesForUpload = processedFiles
-      // Thêm type guard cho biến f để TS hiểu rõ kiểu trong filter
       .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
       .map(f => f.content as File);
   }
