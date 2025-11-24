@@ -1,49 +1,35 @@
+// Chỉ định chính xác tệp module chính (.mjs)
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs'; 
+// Import tệp worker module
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs';
 import * as mammoth from 'mammoth';
 
-// Khai báo biến để lưu trữ module pdfjs-dist sau khi import động
-let pdfjsLib: any = null;
+// Sử dụng biến worker đã được Vite xử lý, thay vì URL CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 /**
- * Dynamic import pdfjs-dist để Vite + Rollup không complain khi build
- */
-const loadPdfJs = async () => {
-  if (!pdfjsLib) {
-    // SỬA: Thay đổi đường dẫn import thành 'pdf.mjs' để Rollup/Vite phân giải đúng
-    pdfjsLib = await import('pdfjs-dist/build/pdf.mjs'); // dynamic import
-
-    // KHẮC PHỤC LỖI WORKER: Import động tệp Worker module thay vì dùng CDN
-    const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
-
-    // Lưu ý: Đã loại bỏ dòng cấu hình Worker cũ trỏ đến CDN (https://cdnjs...)
-  }
-  return pdfjsLib;
-};
-
-/**
- * Lấy text từ PDF
+ * Extracts text content from a given PDF file.
+ * @param file The PDF file to process.
+ * @returns A promise that resolves to the extracted text.
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
-  const pdfjs = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
-  // Loại bỏ type casting 'any' nếu dự án của bạn là TypeScript hiện đại
-  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise; 
+  // The type casting is necessary because the library's types might not be perfectly aligned.
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
-
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const text = await page.getTextContent();
-    textContent +=
-      text.items
-        .map((item: any) => ('str' in item ? item.str : ''))
-        .join(' ') + '\n';
+    // The 'str' property exists on TextItem objects.
+    textContent += text.items.map((item: any) => ('str' in item ? item.str : '')).join(' ') + '\n';
   }
-
   return textContent;
 };
 
 /**
- * Lấy text từ DOCX
+ * Extracts raw text content from a given DOCX file.
+ * @param file The DOCX file to process.
+ * @returns A promise that resolves to the extracted text.
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -51,9 +37,6 @@ const getTextFromDocx = async (file: File): Promise<string> => {
   return result.value;
 };
 
-/**
- * Processed file type
- */
 export type ProcessedFile = {
   type: 'text' | 'file';
   content: string | File;
@@ -61,7 +44,10 @@ export type ProcessedFile = {
 };
 
 /**
- * Xử lý file: PDF/DOCX extract text, các file khác giữ nguyên
+ * Processes a file to extract text if it's a supported format (PDF, DOCX),
+ * otherwise returns the file object for direct upload.
+ * @param file The file to process.
+ * @returns A promise that resolves to a ProcessedFile object.
  */
 export const processFileContent = async (file: File): Promise<ProcessedFile> => {
   try {
@@ -69,18 +55,16 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       const text = await getTextFromPdf(file);
       return { type: 'text', content: text, name: file.name };
     }
-
-    if (
-      file.type ===
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ) {
+    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       const text = await getTextFromDocx(file);
       return { type: 'text', content: text, name: file.name };
     }
-
+    // For other file types (images, .doc), return the file for multimodal processing.
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
-    console.error(`Error processing file ${file.name}:`, error);
+    console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
+    // If parsing fails for any reason, fall back to sending the file directly.
+    // This provides a robust fallback mechanism.
     return { type: 'file', content: file, name: file.name };
   }
 };
