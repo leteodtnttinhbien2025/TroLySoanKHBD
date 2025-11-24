@@ -1,13 +1,13 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX: Import hàm (value) là named export
-import { processFileContent } from './fileParser'; 
-// FIX: Import kiểu dữ liệu (type) một cách tường minh
-import type { ProcessedFile } from "./fileParser";
+// FIX CÚ PHÁP: Import hàm processFileContent dưới dạng default import (như TS đề xuất)
+// và import type ProcessedFile dưới dạng named export.
+import processFileContent from './fileParser'; 
+import type { ProcessedFile } from "./fileParser"; // Dùng type import riêng để tránh xung đột
 
 // It's recommended to initialize GoogleGenAI only once.
-// SỬA LỖI API KEY: Sử dụng GEMINI_API_KEY phù hợp với cấu hình Vite
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+// Ensure the API key is available in the environment variables.
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! }); // Sửa thành GEMINI_API_KEY!
 
 // Helper function to convert a file to a GenerativePart
 const fileToGenerativePart = async (file: File): Promise<Part> => {
@@ -34,16 +34,16 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // FIX: Sử dụng processFileContent trực tiếp
+    // SỬ DỤNG: Hàm đã được import dưới tên processFileContent (default)
     const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
-    // Khai báo kiểu cho biến f
+    // SỬA TYPE CHECK: Khai báo kiểu cho biến f
     textContents = processedFiles
       .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
-    // Khai báo kiểu cho biến f
+    // SỬA TYPE CHECK: Khai báo kiểu cho biến f
     filesForUpload = processedFiles
       .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
       .map(f => f.content as File);
