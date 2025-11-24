@@ -1,5 +1,6 @@
 import * as mammoth from 'mammoth';
 
+// Khai báo biến để lưu trữ module pdfjs-dist sau khi import động
 let pdfjsLib: any = null;
 
 /**
@@ -7,9 +8,14 @@ let pdfjsLib: any = null;
  */
 const loadPdfJs = async () => {
   if (!pdfjsLib) {
-    pdfjsLib = await import('pdfjs-dist/build/pdf'); // dynamic import
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    // SỬA: Thay đổi đường dẫn import thành 'pdf.mjs' để Rollup/Vite phân giải đúng
+    pdfjsLib = await import('pdfjs-dist/build/pdf.mjs'); // dynamic import
+
+    // KHẮC PHỤC LỖI WORKER: Import động tệp Worker module thay vì dùng CDN
+    const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
+
+    // Lưu ý: Đã loại bỏ dòng cấu hình Worker cũ trỏ đến CDN (https://cdnjs...)
   }
   return pdfjsLib;
 };
@@ -20,15 +26,17 @@ const loadPdfJs = async () => {
 const getTextFromPdf = async (file: File): Promise<string> => {
   const pdfjs = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  // Loại bỏ type casting 'any' nếu dự án của bạn là TypeScript hiện đại
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise; 
   let textContent = '';
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const text = await page.getTextContent();
-    textContent += text.items
-      .map((item: any) => ('str' in item ? item.str : ''))
-      .join(' ') + '\n';
+    textContent +=
+      text.items
+        .map((item: any) => ('str' in item ? item.str : ''))
+        .join(' ') + '\n';
   }
 
   return textContent;
