@@ -1,12 +1,12 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX 1: Import hàm processFileContent dưới dạng default import
+// FIX 1: Import hàm processFileContent dưới dạng default import (theo đề xuất của TS và sửa đổi fileParser.ts)
 import processFileContent from './fileParser'; 
-// FIX 2: Import type ProcessedFile riêng biệt và tường minh
-import type { ProcessedFile } from './fileParser';
+// FIX 2: Import kiểu dữ liệu ProcessedFile dưới dạng named import thông thường
+import { ProcessedFile } from './fileParser';
 
 // It's recommended to initialize GoogleGenAI only once.
-// Sửa process.env.API_KEY! thành process.env.GEMINI_API_KEY! (để phù hợp với cấu hình vite)
+// Sửa process.env.API_KEY! thành process.env.GEMINI_API_KEY! (để phù hợp với cấu hình vite.config.ts)
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // Helper function to convert a file to a GenerativePart
@@ -34,7 +34,7 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // FIX 3: Thêm chú thích ProcessedFile[] để khắc phục lỗi TS2345 (loại bỏ kiểu UserConfigFnObject bị nhầm lẫn)
+    // FIX 3: Thêm chú thích ProcessedFile[] để khắc phục lỗi TS2345 (do lỗi Import đã giải quyết)
     const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
     // Thêm type guard để TypeScript có thể thu hẹp kiểu dữ liệu
