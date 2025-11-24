@@ -1,15 +1,19 @@
 // services/fileParser.ts
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import * as mammoth from 'mammoth';
 
-// Dùng worker từ CDN để PDF.js load worker script
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+// Hàm dynamic import pdfjs
+const getPdfJs = async () => {
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+  return pdfjsLib;
+};
 
 /**
- * Extract text content from a PDF file.
+ * Extract text content from a PDF file
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
+  const pdfjsLib = await getPdfJs();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
@@ -26,7 +30,7 @@ const getTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
- * Extract raw text from a DOCX file.
+ * Extract raw text from a DOCX file
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -60,6 +64,7 @@ export const processFileContent = async (
       return { type: 'text', content: text, name: file.name };
     }
 
+    // Fallback for unsupported files
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Error processing file ${file.name}:`, error);
