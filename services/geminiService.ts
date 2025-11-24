@@ -1,13 +1,13 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX CÚ PHÁP: Import hàm processFileContent dưới dạng default import (như TS đề xuất)
-// và import type ProcessedFile dưới dạng named export.
+// FIX 1: Chuyển processFileContent thành default import (theo đề xuất của TS)
 import processFileContent from './fileParser'; 
-import type { ProcessedFile } from "./fileParser"; // Dùng type import riêng để tránh xung đột
+// FIX 1: Import type ProcessedFile riêng để tránh xung đột
+import type { ProcessedFile } from './fileParser'; 
 
 // It's recommended to initialize GoogleGenAI only once.
-// Ensure the API key is available in the environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! }); // Sửa thành GEMINI_API_KEY!
+// FIX 2: Sửa tên biến môi trường thành GEMINI_API_KEY!
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // Helper function to convert a file to a GenerativePart
 const fileToGenerativePart = async (file: File): Promise<Part> => {
@@ -34,17 +34,17 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // SỬ DỤNG: Hàm đã được import dưới tên processFileContent (default)
+    // FIX 3: Thêm chú thích kiểu dữ liệu tường minh ProcessedFile[]
     const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
     
-    // SỬA TYPE CHECK: Khai báo kiểu cho biến f
     textContents = processedFiles
+      // Thêm type guard cho biến f để TS hiểu rõ kiểu trong filter
       .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
-    // SỬA TYPE CHECK: Khai báo kiểu cho biến f
     filesForUpload = processedFiles
+      // Thêm type guard cho biến f để TS hiểu rõ kiểu trong filter
       .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
       .map(f => f.content as File);
   }
