@@ -1,0 +1,5 @@
+{
+  "name": "Trợ lý soạn KHBD theo CV 5512 (1.02)",
+  "description": "Một ứng dụng web giúp giáo viên tạo Kế hoạch bài dạy (giáo án) theo mẫu của Công văn 5512 một cách nhanh chóng và hiệu quả, sử dụng sức mạnh của Gemini API.",
+  "requestFramePermissions": []
+}
