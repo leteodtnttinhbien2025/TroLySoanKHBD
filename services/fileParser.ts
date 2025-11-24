@@ -1,36 +1,33 @@
-// services/fileParser.ts
+import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 
-// Hàm dynamic import pdfjs
-const getPdfJs = async () => {
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
-  return pdfjsLib;
-};
+// It is crucial to set the workerSrc to ensure PDF.js can load its worker script.
+// This path should point to the worker file hosted on a CDN.
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
 
 /**
- * Extract text content from a PDF file
+ * Extracts text content from a given PDF file.
+ * @param file The PDF file to process.
+ * @returns A promise that resolves to the extracted text.
  */
 const getTextFromPdf = async (file: File): Promise<string> => {
-  const pdfjsLib = await getPdfJs();
   const arrayBuffer = await file.arrayBuffer();
+  // The type casting is necessary because the library's types might not be perfectly aligned.
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textContent = '';
-
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const text = await page.getTextContent();
-    textContent += text.items
-      .map((item: any) => ('str' in item ? item.str : ''))
-      .join(' ') + '\n';
+    // The 'str' property exists on TextItem objects.
+    textContent += text.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
   }
-
   return textContent;
 };
 
 /**
- * Extract raw text from a DOCX file
+ * Extracts raw text content from a given DOCX file.
+ * @param file The DOCX file to process.
+ * @returns A promise that resolves to the extracted text.
  */
 const getTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
@@ -45,29 +42,27 @@ export type ProcessedFile = {
 };
 
 /**
- * Process a file: extract text if PDF/DOCX, else return file.
+ * Processes a file to extract text if it's a supported format (PDF, DOCX),
+ * otherwise returns the file object for direct upload.
+ * @param file The file to process.
+ * @returns A promise that resolves to a ProcessedFile object.
  */
-export const processFileContent = async (
-  file: File
-): Promise<ProcessedFile> => {
+export const processFileContent = async (file: File): Promise<ProcessedFile> => {
   try {
     if (file.type === 'application/pdf') {
       const text = await getTextFromPdf(file);
       return { type: 'text', content: text, name: file.name };
     }
-
-    if (
-      file.type ===
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ) {
+    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       const text = await getTextFromDocx(file);
       return { type: 'text', content: text, name: file.name };
     }
-
-    // Fallback for unsupported files
+    // For other file types (images, .doc), return the file for multimodal processing.
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
-    console.error(`Error processing file ${file.name}:`, error);
+    console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
+    // If parsing fails for any reason, fall back to sending the file directly.
+    // This provides a robust fallback mechanism.
     return { type: 'file', content: file, name: file.name };
   }
 };
