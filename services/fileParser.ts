@@ -1,9 +1,9 @@
+import * as pdfjsLib from "pdfjs-dist";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 export const getTextFromPdf = async (file: File): Promise<string> => {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.js");
-  const pdfWorker = await import("pdfjs-dist/legacy/build/pdf.worker.js");
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
-
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
@@ -14,7 +14,7 @@ export const getTextFromPdf = async (file: File): Promise<string> => {
     const content = await page.getTextContent();
 
     text += content.items
-      .map((i: any) => ("str" in i ? i.str : ""))
+      .map((item: any) => ("str" in item ? item.str : ""))
       .join(" ") + "\n";
   }
 
