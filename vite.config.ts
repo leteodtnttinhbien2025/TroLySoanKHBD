@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
-    
+
     return {
         server: {
             port: 3000,
@@ -15,15 +15,13 @@ export default defineConfig(({ mode }) => {
             rollupOptions: {
                 output: {
                     manualChunks(id) {
-                        if (id.includes('pdf.worker')) {
-                            return 'pdf.worker';
-                        }
+                        // Không cần xử lý pdf.worker nữa vì dùng pdf-parse-browser
+                        return undefined;
                     }
                 },
+                // Không còn external pdfjs-dist
                 external: [
-                    'fs', 'path', 'stream', 'util',
-                    'pdfjs-dist/legacy/build/pdf.js',
-                    'pdfjs-dist/legacy/build/pdf.worker.js'
+                    'fs', 'path', 'stream', 'util'
                 ]
             }
         },
@@ -34,11 +32,7 @@ export default defineConfig(({ mode }) => {
             alias: {
                 '@': path.resolve(__dirname, '.'),
 
-                // ⭐ Alias PDFJS chính xác cho bản 4.x
-                'pdfjs-dist/build/pdf.js': 'pdfjs-dist/legacy/build/pdf.js',
-                'pdfjs-dist/build/pdf.worker.js': 'pdfjs-dist/legacy/build/pdf.worker.js',
-
-                // Mammoth
+                // Mammoth browser bundle
                 'mammoth': 'mammoth/mammoth.browser.js'
             }
         }
