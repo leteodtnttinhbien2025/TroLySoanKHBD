@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             manualChunks(id) {
+              // Tách pdf.worker.js ra khỏi gói chính
               if (id.includes('pdfjs-dist/build/pdf.worker')) {
                 return 'pdf.worker';
               }
@@ -32,12 +33,12 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          // FIX CUỐI CÙNG: Sử dụng đường dẫn tuyệt đối cho Alias. 
-          // Nếu tệp pdf.js vẫn không được tìm thấy, bạn cần kiểm tra chính xác 
-          // tệp nào tồn tại trong thư mục node_modules/pdfjs-dist/build/
-          'pdfjs-dist': path.resolve(rootDir, 'node_modules/pdfjs-dist/build/pdf.js'),
           
-          // Alias cho mammoth.browser.js (tương đối là đủ)
+          // FIX CUỐI CÙNG: Thử lại với '.mjs' sử dụng đường dẫn tuyệt đối.
+          // Đây là tệp ES module chính trong các phiên bản mới của pdfjs-dist.
+          'pdfjs-dist': path.resolve(rootDir, 'node_modules/pdfjs-dist/build/pdf.mjs'),
+          
+          // Alias cho mammoth.browser.js
           'mammoth': 'mammoth/mammoth.browser.js',
           
           // Alias cho worker
