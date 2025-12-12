@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "."),
+
+        // ⭐ Alias legacy PDFJS - bắt buộc cho bundler
+        "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
+        "pdfjs-dist/build/pdf.worker.js": "pdfjs-dist/legacy/build/pdf.worker.js",
+
+        // Mammoth
         "mammoth": "mammoth/mammoth.browser.js"
       }
     }
