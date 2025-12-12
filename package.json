@@ -1,7 +1,7 @@
 {
-  "name": "tro-ly-soan-khbd-theo-cv-5512-1-02",
+  "name": "trợ-lý-soạn-khbd-theo-cv-5512-(1.02)",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,10 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react": "^19.2.0",
     "@google/genai": "^1.27.0",
-    "pdfjs-dist": "4.4.168",
     "mammoth": "latest",
     "katex": "0.16.9"
   },
