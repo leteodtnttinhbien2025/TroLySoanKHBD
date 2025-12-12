@@ -2,7 +2,6 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Định nghĩa thư mục gốc của dự án
 const rootDir = path.resolve(__dirname);
 
 export default defineConfig(({ mode }) => {
@@ -17,13 +16,11 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             manualChunks(id) {
-              // Tách pdf.worker.js ra khỏi gói chính
-              if (id.includes('pdfjs-dist/build/pdf.worker')) {
+              if (id.includes('pdf.worker')) {
                 return 'pdf.worker';
               }
             }
           },
-          // Giữ lại các external Node.js cơ bản
           external: ['fs', 'path', 'stream', 'util'], 
         }
       },
@@ -33,16 +30,13 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          
-          // FIX CUỐI CÙNG: Thử lại với '.mjs' sử dụng đường dẫn tuyệt đối.
-          // Đây là tệp ES module chính trong các phiên bản mới của pdfjs-dist.
-          'pdfjs-dist': path.resolve(rootDir, 'node_modules/pdfjs-dist/build/pdf.mjs'),
-          
-          // Alias cho mammoth.browser.js
-          'mammoth': 'mammoth/mammoth.browser.js',
-          
-          // Alias cho worker
-          'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs'
+
+          // ⭐ Alias PDFJS LEGACY (đúng cho pdfjs-dist 3.x–4.x)
+          'pdfjs-dist/build/pdf': 'pdfjs-dist/legacy/build/pdf',
+          'pdfjs-dist/build/pdf.worker.js': 'pdfjs-dist/legacy/build/pdf.worker.js',
+
+          // Alias Mammoth
+          'mammoth': 'mammoth/mammoth.browser.js'
         }
       }
     };
