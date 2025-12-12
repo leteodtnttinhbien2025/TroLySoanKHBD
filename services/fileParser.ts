@@ -1,24 +1,24 @@
 const getTextFromPdf = async (file: File): Promise<string> => {
-  // Import ES module chuẩn cho PDF.js v4.x
-  const pdfjsLib = await import('pdfjs-dist');
-  const worker = await import('pdfjs-dist/build/pdf.worker?worker');
+  // Import ES module chính xác từ pdfjs-dist
+  const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+  const worker = await import('pdfjs-dist/build/pdf.worker.mjs?worker');
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = worker.default;
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
-  let textContent = '';
+  let text = '';
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const text = await page.getTextContent();
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
 
-    textContent +=
-      text.items
+    text +=
+      content.items
         .map((item) => ('str' in item ? item.str : ''))
         .join(' ') + '\n';
   }
 
-  return textContent;
+  return text;
 };
