@@ -1,11 +1,8 @@
-/**
- * Trích xuất PDF bằng pdfjs-dist (dynamic import để tránh lỗi Vite/Vercel)
- */
 const getTextFromPdf = async (file: File): Promise<string> => {
-  const pdfjsLib = await import('pdfjs-dist/build/pdf');
+  // Import đúng bản PDF.js hỗ trợ bundler
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
   const pdfWorker = await import('pdfjs-dist/legacy/build/pdf.worker.js');
 
-  // pdf.worker cần dùng default export
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker.default;
 
   const arrayBuffer = await file.arrayBuffer();
@@ -18,7 +15,7 @@ const getTextFromPdf = async (file: File): Promise<string> => {
     const text = await page.getTextContent();
 
     textContent += text.items
-      .map((item) => ('str' in item ? item.str : ''))
+      .map(item => ('str' in item ? item.str : ''))
       .join(' ') + '\n';
   }
 
