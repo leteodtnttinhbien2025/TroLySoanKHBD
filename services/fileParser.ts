@@ -1,40 +1,10 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 
-// It is crucial to set the workerSrc to ensure PDF.js can load its worker script.
-// This path should point to the worker file hosted on a CDN.
+// Khởi tạo Worker cho PDF.js, quan trọng để tránh lỗi trong môi trường trình duyệt.
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
 
-/**
- * Extracts text content from a given PDF file.
- * @param file The PDF file to process.
- * @returns A promise that resolves to the extracted text.
- */
-const getTextFromPdf = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  // The type casting is necessary because the library's types might not be perfectly aligned.
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let textContent = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const text = await page.getTextContent();
-    // The 'str' property exists on TextItem objects.
-    textContent += text.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-  }
-  return textContent;
-};
-
-/**
- * Extracts raw text content from a given DOCX file.
- * @param file The DOCX file to process.
- * @returns A promise that resolves to the extracted text.
- */
-const getTextFromDocx = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
-};
-
+// Định nghĩa kiểu dữ liệu cho tệp đã xử lý
 export type ProcessedFile = {
   type: 'text' | 'file';
   content: string | File;
@@ -42,10 +12,41 @@ export type ProcessedFile = {
 };
 
 /**
- * Processes a file to extract text if it's a supported format (PDF, DOCX),
- * otherwise returns the file object for direct upload.
- * @param file The file to process.
- * @returns A promise that resolves to a ProcessedFile object.
+ * Trích xuất nội dung văn bản từ tệp PDF.
+ * @param file Tệp PDF đầu vào.
+ * @returns Nội dung văn bản đã trích xuất.
+ */
+const getTextFromPdf = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  // Lấy tài liệu PDF
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let textContent = '';
+  // Duyệt qua từng trang
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const text = await page.getTextContent();
+    textContent += text.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+  }
+  return textContent;
+};
+
+/**
+ * Trích xuất nội dung văn bản từ tệp DOCX.
+ * @param file Tệp DOCX đầu vào.
+ * @returns Nội dung văn bản đã trích xuất.
+ */
+const getTextFromDocx = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  // mammoth.js xử lý arrayBuffer
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
+
+/**
+ * Xử lý tệp: trích xuất văn bản (PDF, DOCX) hoặc trả về tệp gốc.
+ * (Named Export)
+ * @param file Tệp đầu vào.
+ * @returns Object ProcessedFile.
  */
 export const processFileContent = async (file: File): Promise<ProcessedFile> => {
   try {
@@ -57,12 +58,14 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       const text = await getTextFromDocx(file);
       return { type: 'text', content: text, name: file.name };
     }
-    // For other file types (images, .doc), return the file for multimodal processing.
+    // Đối với các loại tệp khác (hình ảnh, audio, v.v.), trả về tệp gốc cho mô hình multimodal.
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
-    // If parsing fails for any reason, fall back to sending the file directly.
-    // This provides a robust fallback mechanism.
+    // Xử lý lỗi: nếu không đọc được, vẫn trả về tệp gốc
     return { type: 'file', content: file, name: file.name };
   }
 };
+
+// FIX CỐ ĐỊNH: Thêm default export để giải quyết lỗi TS2614
+export default processFileContent;
