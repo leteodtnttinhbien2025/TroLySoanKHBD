@@ -2,6 +2,9 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Định nghĩa thư mục gốc của dự án
+const rootDir = path.resolve(__dirname);
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
@@ -14,13 +17,12 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             manualChunks(id) {
-              // Tách pdf.worker.js ra khỏi gói chính
               if (id.includes('pdfjs-dist/build/pdf.worker')) {
                 return 'pdf.worker';
               }
             }
           },
-          // Giữ lại các external Node.js cơ bản (fs, path)
+          // Giữ lại các external Node.js cơ bản
           external: ['fs', 'path', 'stream', 'util'], 
         }
       },
@@ -30,12 +32,16 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          // FIX MỚI QUAN TRỌNG: Đổi từ 'pdf.mjs' sang 'pdf.js'
-          'pdfjs-dist': 'pdfjs-dist/build/pdf.js', 
-          // Thiết lập alias cho worker để đảm bảo tải đúng
-          'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs', 
-          // Bổ sung alias cho mammoth để tránh lỗi tương tự
-          'mammoth': 'mammoth/mammoth.browser.js'
+          // FIX CUỐI CÙNG: Sử dụng đường dẫn tuyệt đối cho Alias. 
+          // Nếu tệp pdf.js vẫn không được tìm thấy, bạn cần kiểm tra chính xác 
+          // tệp nào tồn tại trong thư mục node_modules/pdfjs-dist/build/
+          'pdfjs-dist': path.resolve(rootDir, 'node_modules/pdfjs-dist/build/pdf.js'),
+          
+          // Alias cho mammoth.browser.js (tương đối là đủ)
+          'mammoth': 'mammoth/mammoth.browser.js',
+          
+          // Alias cho worker
+          'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs'
         }
       }
     };
