@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CopyIcon } from './icons';
+import katex from 'katex';
 
 interface GeneratedPlanProps {
   planContent: string;
@@ -52,7 +53,10 @@ const GeneratedPlan: React.FC<GeneratedPlanProps> = ({ planContent }) => {
       const fullHtml = `
         <!DOCTYPE html>
         <html>
-          <head>${styles}</head>
+          <head>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+            ${styles}
+          </head>
           <body>${contentHtml}</body>
         </html>
       `;
@@ -82,19 +86,43 @@ const GeneratedPlan: React.FC<GeneratedPlanProps> = ({ planContent }) => {
 
   const parseInline = (text: string): React.ReactNode => {
     if (!text) return '';
-    const regex = /(\*\*.*?\*\*|<br\s*\/?>)/gi;
+    // Updated regex to include LaTeX delimiters: $$...$$ (block) and $...$ (inline)
+    const regex = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\*\*.*?\*\*|<br\s*\/?>)/gi;
     const parts = text.split(regex).filter(Boolean);
 
     return parts.map((part, index) => {
       const key = `part-${index}`;
+      
       if (part.match(/^<br\s*\/?>$/i)) {
         return <br key={key} />;
       }
+
+      // Block Math
+      if (part.startsWith('$$') && part.endsWith('$$')) {
+        try {
+          const html = katex.renderToString(part.slice(2, -2), { throwOnError: false, displayMode: true });
+          return <span key={key} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch (e) {
+          return <code key={key}>{part}</code>;
+        }
+      }
+
+      // Inline Math
+      if (part.startsWith('$') && part.endsWith('$')) {
+        try {
+          const html = katex.renderToString(part.slice(1, -1), { throwOnError: false, displayMode: false });
+          return <span key={key} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch (e) {
+          return <code key={key}>{part}</code>;
+        }
+      }
+
       if (part.startsWith('**') && part.endsWith('**')) {
         const content = part.slice(2, -2);
         return <strong key={key} className="font-bold">{parseInline(content)}</strong>;
       }
-      // Remove any remaining asterisks from the displayed text
+
+      // Remove any remaining asterisks from the displayed text (as requested)
       return part.replace(/\*/g, '');
     });
   };

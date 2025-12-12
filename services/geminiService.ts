@@ -1,13 +1,10 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import type { LessonPlanData } from '../types';
-// FIX: Import hàm processFileContent dưới dạng default import
-import processFileContent from './fileParser'; 
-// FIX: Import kiểu dữ liệu ProcessedFile dưới dạng named import
-import { ProcessedFile } from './fileParser'; 
+import { processFileContent } from './fileParser';
 
 // It's recommended to initialize GoogleGenAI only once.
 // Ensure the API key is available in the environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! }); // Sử dụng GEMINI_API_KEY!
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 // Helper function to convert a file to a GenerativePart
 const fileToGenerativePart = async (file: File): Promise<Part> => {
@@ -34,18 +31,15 @@ export const generateLessonPlan = async function* (
 
   if (files.length > 0) {
     onStatusChange('Đang phân tích tài liệu đính kèm...');
-    // FIX TS2345: Thêm chú thích ProcessedFile[] để TypeScript không bị nhầm lẫn
-    const processedFiles: ProcessedFile[] = await Promise.all(files.map(processFileContent));
+    const processedFiles = await Promise.all(files.map(processFileContent));
     
-    // Thêm type guard cho biến f
     textContents = processedFiles
-      .filter((f): f is (ProcessedFile & { type: 'text' }) => f.type === 'text')
+      .filter(f => f.type === 'text')
       .map(f => `--- NỘI DUNG TỪ TỆP: ${f.name} ---\n${f.content}\n--- KẾT THÚC NỘI DUNG TỪ TỆP: ${f.name} ---`)
       .join('\n\n');
 
-    // Thêm type guard cho biến f
     filesForUpload = processedFiles
-      .filter((f): f is (ProcessedFile & { type: 'file' }) => f.type === 'file')
+      .filter(f => f.type === 'file')
       .map(f => f.content as File);
   }
 
@@ -237,6 +231,7 @@ ${headerInfoBlock}
 5. Không viết lời thoại của GV và HS, chỉ mô tả hoạt động.
 6. **CHỈ THỊ QUAN TRỌNG NHẤT:** Bạn phải tuân thủ nghiêm ngặt và tuyệt đối mẫu kế hoạch này. Không được tự ý thay đổi, thêm, bớt hoặc diễn giải khác đi bất kỳ mục nào khi chưa có yêu cầu cụ thể từ người dùng. Mọi chỉnh sửa phải chính xác theo yêu cầu, không được sáng tạo ngoài lề.
 7. Cột 'Dự kiến sản phẩm' trong các bảng tổ chức thực hiện phải chứa gợi ý câu trả lời, sản phẩm học tập, kết quả thảo luận, bài làm dự kiến của học sinh cho các nhiệm vụ được giao.
+8. **ĐỊNH DẠNG CÔNG THỨC:** Nếu nội dung có chứa công thức Toán, Vật lí, Hóa học, bạn BẮT BUỘC phải viết dưới dạng mã LaTeX được bao quanh bởi dấu $ (đối với công thức trên cùng một dòng) hoặc $$ (đối với công thức nằm riêng một dòng).
 `;
 
   const model = 'gemini-2.5-flash';
@@ -253,9 +248,12 @@ ${headerInfoBlock}
 
   } catch (error: unknown) {
     console.error("Lỗi khi gọi Gemini API:", error);
+    // Propagate a more specific error message to the user for better diagnosis,
+    // instead of showing a generic message or attempting to parse the error string.
     if (error instanceof Error && error.message) {
       throw new Error(`Không thể tạo kế hoạch bài dạy. Lỗi từ API: ${error.message}`);
     }
+    // Fallback for non-standard errors.
     throw new Error("Không thể tạo kế hoạch bài dạy do một lỗi không xác định. Vui lòng kiểm tra console để biết thêm chi tiết.");
   }
 };

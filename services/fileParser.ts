@@ -35,7 +35,6 @@ const getTextFromDocx = async (file: File): Promise<string> => {
   return result.value;
 };
 
-// Export Type as Named Export
 export type ProcessedFile = {
   type: 'text' | 'file';
   content: string | File;
@@ -62,10 +61,8 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
     return { type: 'file', content: file, name: file.name };
   } catch (error) {
     console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
-    // If parsing fails for any reason, fall back to returning the file object
+    // If parsing fails for any reason, fall back to sending the file directly.
+    // This provides a robust fallback mechanism.
     return { type: 'file', content: file, name: file.name };
   }
 };
-
-// FIX CỐ ĐỊNH: Thêm default export cho hàm
-export default processFileContent;

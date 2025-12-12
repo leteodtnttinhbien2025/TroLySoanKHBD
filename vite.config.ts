@@ -10,27 +10,13 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
-      // Cấu hình Build để xử lý pdfjs-dist worker
-      build: { 
-        rollupOptions: {
-          output: {
-            manualChunks(id) {
-              // Tách pdf.worker.js ra khỏi gói chính
-              if (id.includes('pdfjs-dist/build/pdf.worker')) {
-                return 'pdf.worker';
-              }
-            }
-          }
-        }
-      },
       define: {
-        // Chỉ giữ lại biến GEMINI_API_KEY duy nhất
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
       resolve: {
         alias: {
-          // Khắc phục lỗi alias nếu có
-          '@': path.resolve(__dirname, '.'), 
+          '@': path.resolve(__dirname, '.'),
         }
       }
     };
