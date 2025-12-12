@@ -1,4 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist'; 
 import * as mammoth from 'mammoth';
 
 // Khởi tạo Worker cho PDF.js, quan trọng để tránh lỗi trong môi trường trình duyệt.
