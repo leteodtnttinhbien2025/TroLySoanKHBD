@@ -1,57 +1,22 @@
-import pdfParse from "pdf-parse-browser";
-import * as mammoth from "mammoth";
+export const getTextFromPdf = async (file: File): Promise<string> => {
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.js");
+  const pdfWorker = await import("pdfjs-dist/legacy/build/pdf.worker.js");
 
-export type ProcessedFile = {
-  type: "text" | "file";
-  content: string | File;
-  name: string;
-};
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const getTextFromPdf = async (file: File): Promise<string> => {
-  try {
-    const buffer = await file.arrayBuffer();
-    const uint8 = new Uint8Array(buffer);
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-    const data = await pdfParse(uint8);
-    return data.text || "";
-  } catch (error) {
-    console.error("Lỗi đọc PDF:", error);
-    return "";
+  let text = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+
+    text += content.items
+      .map((i: any) => ("str" in i ? i.str : ""))
+      .join(" ") + "\n";
   }
+
+  return text;
 };
-
-const getTextFromDocx = async (file: File): Promise<string> => {
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value || "";
-  } catch (error) {
-    console.error("Lỗi đọc DOCX:", error);
-    return "";
-  }
-};
-
-export const processFileContent = async (file: File): Promise<ProcessedFile> => {
-  try {
-    if (file.type === "application/pdf") {
-      const text = await getTextFromPdf(file);
-      return { type: "text", content: text, name: file.name };
-    }
-
-    if (
-      file.type ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ) {
-      const text = await getTextFromDocx(file);
-      return { type: "text", content: text, name: file.name };
-    }
-
-    // Không nằm trong PDF / DOCX → để nguyên file
-    return { type: "file", content: file, name: file.name };
-  } catch (error) {
-    console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
-    return { type: "file", content: file, name: file.name };
-  }
-};
-
-export default processFileContent;
