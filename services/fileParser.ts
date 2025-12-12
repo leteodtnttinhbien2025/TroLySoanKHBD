@@ -8,17 +8,27 @@ export type ProcessedFile = {
 };
 
 const getTextFromPdf = async (file: File): Promise<string> => {
-  const buffer = await file.arrayBuffer();
-  const uint8 = new Uint8Array(buffer);
+  try {
+    const buffer = await file.arrayBuffer();
+    const uint8 = new Uint8Array(buffer);
 
-  const data = await pdfParse(uint8);
-  return data.text || "";
+    const data = await pdfParse(uint8);
+    return data.text || "";
+  } catch (error) {
+    console.error("Lỗi đọc PDF:", error);
+    return "";
+  }
 };
 
 const getTextFromDocx = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value || "";
+  } catch (error) {
+    console.error("Lỗi đọc DOCX:", error);
+    return "";
+  }
 };
 
 export const processFileContent = async (file: File): Promise<ProcessedFile> => {
@@ -36,6 +46,7 @@ export const processFileContent = async (file: File): Promise<ProcessedFile> => 
       return { type: "text", content: text, name: file.name };
     }
 
+    // Không nằm trong PDF / DOCX → để nguyên file
     return { type: "file", content: file, name: file.name };
   } catch (error) {
     console.error(`Lỗi khi xử lý tệp ${file.name}:`, error);
