@@ -14,12 +14,13 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             manualChunks(id) {
+              // Tách pdf.worker.js ra khỏi gói chính
               if (id.includes('pdfjs-dist/build/pdf.worker')) {
                 return 'pdf.worker';
               }
             }
           },
-          // FIX CŨ: Giữ lại các external Node.js cơ bản (fs, path)
+          // Giữ lại các external Node.js cơ bản (fs, path)
           external: ['fs', 'path', 'stream', 'util'], 
         }
       },
@@ -29,12 +30,12 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          // FIX MỚI QUAN TRỌNG: Thiết lập alias để chỉ định tệp chính xác
-          // Đây là cách giải quyết Rollup không tìm thấy tệp.
-          // Chúng ta chỉ định dùng tệp 'pdf.mjs'
-          'pdfjs-dist': 'pdfjs-dist/build/pdf.mjs', 
-          // Cần thiết nếu Rollup/Vite không tự động tìm thấy worker.mjs
-          'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs' 
+          // FIX MỚI QUAN TRỌNG: Đổi từ 'pdf.mjs' sang 'pdf.js'
+          'pdfjs-dist': 'pdfjs-dist/build/pdf.js', 
+          // Thiết lập alias cho worker để đảm bảo tải đúng
+          'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs', 
+          // Bổ sung alias cho mammoth để tránh lỗi tương tự
+          'mammoth': 'mammoth/mammoth.browser.js'
         }
       }
     };
